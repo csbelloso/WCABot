@@ -123,7 +123,19 @@ def format_registration_open(comp: dict) -> str:
     try:
         # La API devuelve p. ej. "2026-01-01T12:00:00.000Z"
         dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-        return dt.strftime("%Y-%m-%d %H:%M UTC")
+        return dt.strftime("%d/%m/%Y %H:%M UTC")
+    except ValueError:
+        return raw
+
+
+def format_date_ddmmyyyy(raw: str) -> str:
+    """Convierte una fecha en formato AAAA-MM-DD a DD/MM/AAAA. Si no se puede
+    parsear, devuelve el valor original tal cual."""
+    if not raw or raw == "?":
+        return raw
+    try:
+        dt = datetime.strptime(raw, "%Y-%m-%d")
+        return dt.strftime("%d/%m/%Y")
     except ValueError:
         return raw
 
@@ -131,8 +143,8 @@ def format_registration_open(comp: dict) -> str:
 def build_embed(comp: dict, province: str) -> discord.Embed:
     name = comp.get("name", "Competición sin nombre")
     city = comp.get("city", "Ciudad desconocida")
-    start = comp.get("start_date", "?")
-    end = comp.get("end_date", "?")
+    start = format_date_ddmmyyyy(comp.get("start_date", "?"))
+    end = format_date_ddmmyyyy(comp.get("end_date", "?"))
     comp_id = comp.get("id", "")
     url = f"https://www.worldcubeassociation.org/competitions/{comp_id}"
 
@@ -252,7 +264,7 @@ async def listar(ctx: commands.Context):
         return
 
     lines = [
-        f"• **{c.get('name')}** — {p} ({c.get('start_date')})"
+        f"• **{c.get('name')}** — {p} ({format_date_ddmmyyyy(c.get('start_date'))})"
         for c, p in matches
     ]
     await ctx.send("\n".join(lines))
